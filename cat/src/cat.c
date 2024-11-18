@@ -5,11 +5,13 @@
 
 #include <unistd.h>
 
-
+const char* usage_help = \
+    "Usage: %s [OPTION...] [FILE...]\n"
+    "Try `%s --help` for more information.\n";
 const char* help = \
-    "GNU/Linux cat utility\n"
-    "Version: 0.0.1\n"
-    "LICENSE: MIT License\n"
+    "GNU/Linux cat utility.\n"
+    "Version: 0.0.1.\n"
+    "LICENSE: MIT License.\n"
     "\n"
     "Description: A simple utility to concatenate and display file contents.\n"
     "Flags:\n"
@@ -20,6 +22,7 @@ const char* help = \
     "-T : Show `^I` for tabs.\n"
     "-v : Show non-printing characters as `^` and `^[`.\n"
     "-e : Equivalent to `-vE` (non-printing characters and `$`).\n"
+    "-t : Equivalent to `-vT` (non-printing characters and tabs).\n"
     "-A : Equivalent to `-vET` (non-printing characters, `$`, and tabs).\n"
     "-s : Squeeze blank lines.";
 
@@ -77,7 +80,7 @@ int process_flag(int argc, char* argv[]) {
                 print_help();
                 exit(EXIT_SUCCESS);
             default:
-                fprintf(stderr, "Usage: %s [FLAGS] [filepath]\n", argv[0]);
+                fprintf(stderr, usage_help, argv[0], argv[0]);
                 exit(EXIT_FAILURE);
         }
     }
@@ -110,10 +113,10 @@ void process_file(FILE* fd, int flags) {
 
         if (is_new_line) {
             if ((flags & NUMBER_NONBLANK_LINES) && (ch != '\n')) {
-                printf("%6zu  ", line_number);
+                printf("%6zu\t", line_number);
                 ++line_number;
             } else if (flags & NUMBER_ALL_LINES) {
-                printf("%6zu  ", line_number);
+                printf("%6zu\t", line_number);
                 ++line_number;
             }
         }
@@ -133,18 +136,18 @@ void process_file(FILE* fd, int flags) {
         } else {
             blank_lines = 0;
             is_new_line = false;
-        }
 
-        if (iscntrl(ch) || ch >= 128) {
-            if (flags & SHOW_NON_PRINTING) {
-                print_ctrl_char(ch);
-            } else if ((ch == '\t') && (flags & SHOW_TABS)) {
-                print_ctrl_char(ch);
+            if (iscntrl(ch) || ch >= 128) {
+                if (flags & SHOW_NON_PRINTING) {
+                    print_ctrl_char(ch);
+                } else if ((ch == '\t') && (flags & SHOW_TABS)) {
+                    print_ctrl_char(ch);
+                } else {
+                    putchar(ch);
+                }
             } else {
                 putchar(ch);
             }
-        } else {
-            putchar(ch);
         }
     }
 }
@@ -154,18 +157,21 @@ int main(int argc, char* argv[]) {
     int flags = process_flag(argc, argv);
 
     if (optind >= argc) {
-        fprintf(stderr, "Usage: %s [FLAGS] [filename]\n", argv[0]);
+        fprintf(stderr, usage_help, argv[0], argv[0]);
         return 1;
     }
 
-    FILE* fd = fopen(argv[optind], "r");
-    if (fd == NULL) {
-        fprintf(stderr, "Cannot open file: %s.\n", argv[optind]);
-        return 1;
+    for (; optind < argc; ++optind) {
+        FILE* fd = fopen(argv[optind], "r");
+        if (fd == NULL) {
+            fprintf(stderr, "Cannot open file: %s.\n", argv[optind]);
+            return 1;
+        }
+
+        process_file(fd, flags);
+
+        fclose(fd);
     }
 
-    process_file(fd, flags);
-
-    fclose(fd);
     return 0;
 }

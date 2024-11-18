@@ -1,14 +1,14 @@
 CC = clang
-SRC = src/cat.c
+SRC = src/grep.c
 OUT_DIR_BUILD = build
 OUT_DIR_RELEASE = release
-OUT_NAME = cat
+OUT_NAME = grep
 
 CFLAGS = -Wall -Wextra
 CFLAGS_DEBUG = $(CFLAGS) -g -O0
 CFLAGS_RELEASE = $(CFLAGS) -O2 -DNDEBUG
 
-.PHONY: all build release debug tests clean
+.PHONY: all build release debug clean
 
 all: build
 
@@ -32,13 +32,6 @@ debug: $(OUT_DIR_BUILD)/$(OUT_NAME)_debug
 $(OUT_DIR_BUILD)/$(OUT_NAME)_debug: $(SRC)
 	mkdir -p $(OUT_DIR_BUILD)
 	$(CC) $(CFLAGS_DEBUG) -o $@ $^
-
-# Run tests
-tests: ./tests/run.sh
-	./tests/run.sh
-
-./tests/run.sh:
-	chmod +x ./tests/run.sh || true
 
 # Clean up
 clean:
